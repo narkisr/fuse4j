@@ -27,4 +27,4 @@ CLASSPATH="$CLASSPATH:$M2_REPO/commons-logging/commons-logging/1.1.1/commons-log
 export CLASSPATH
 
 
-java -Djava.library.path=$LD_LIBRARY_PATH fuse.FakeFilesystem $MOUNT_POINT -f
+java -Djava.library.path=$LD_LIBRARY_PATH -Xdebug -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=n fuse.FakeFilesystem $MOUNT_POINT -f
