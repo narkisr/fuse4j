@@ -12,14 +12,17 @@ package fuse;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.nio.ByteBuffer;
 import java.nio.BufferOverflowException;
+import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @SuppressWarnings({"OctalInteger"})
 public class FakeFilesystem implements Filesystem3, XattrSupport, LifecycleSupport {
     private static final Log log = LogFactory.getLog(FakeFilesystem.class);
+
 
     private static final int BLOCK_SIZE = 512;
     private static final int NAME_LENGTH = 1024;
@@ -35,8 +38,9 @@ public class FakeFilesystem implements Filesystem3, XattrSupport, LifecycleSuppo
             this.name = name;
             this.mode = mode;
 
-            for (int i = 0; i < xattrs.length - 1; i += 2)
+            for (int i = 0; i < xattrs.length - 1; i += 2) {
                 this.xattrs.put(xattrs[i], xattrs[i + 1].getBytes());
+            }
 
             nfiles++;
         }
@@ -104,27 +108,26 @@ public class FakeFilesystem implements Filesystem3, XattrSupport, LifecycleSuppo
         }
     }
 
-
     // a root directory
     private Directory root;
-
 
     // lookup node
 
     private Node lookup(String path) {
-        if (path.equals("/"))
+        if (path.equals("/")) {
             return root;
+        }
 
         java.io.File f = new java.io.File(path);
         Node parent = lookup(f.getParent());
         Node node = (parent instanceof Directory) ? ((Directory) parent).files.get(f.getName()) : null;
 
-        if (log.isDebugEnabled())
+        if (log.isDebugEnabled()) {
             log.debug("  lookup(\"" + path + "\") returning: " + node);
+        }
 
         return node;
     }
-
 
     public FakeFilesystem() {
         root = new Directory("", 0755, "description", "ROOT directory");
@@ -139,7 +142,6 @@ public class FakeFilesystem implements Filesystem3, XattrSupport, LifecycleSuppo
 
         log.info("created");
     }
-
 
     public int chmod(String path, int mode) throws FuseException {
         Node node = lookup(path);
@@ -173,8 +175,7 @@ public class FakeFilesystem implements Filesystem3, XattrSupport, LifecycleSuppo
             return 0;
         } else if (node instanceof Link) {
             Link link = (Link) node;
-            getattrSetter.set(link.hashCode(), FuseFtypeConstants.TYPE_SYMLINK | link.mode, 1, 0, 0, 0, link.link.length(), (link.link.length() + BLOCK_SIZE - 1) / BLOCK_SIZE, time, time, time
-            );
+            getattrSetter.set(link.hashCode(), FuseFtypeConstants.TYPE_SYMLINK | link.mode, 1, 0, 0, 0, link.link.length(), (link.link.length() + BLOCK_SIZE - 1) / BLOCK_SIZE, time, time, time);
 
             return 0;
         }
@@ -194,8 +195,10 @@ public class FakeFilesystem implements Filesystem3, XattrSupport, LifecycleSuppo
                         : ((child instanceof Link)
                         ? FuseFtypeConstants.TYPE_SYMLINK
                         : 0));
-                if (ftype > 0)
+
+                if (ftype > 0) {
                     filler.add(child.name, child.hashCode(), ftype | child.mode);
+                }
             }
 
             return 0;
@@ -292,8 +295,9 @@ public class FakeFilesystem implements Filesystem3, XattrSupport, LifecycleSuppo
     // new operation (called on every filehandle close), fh is filehandle passed from open
 
     public int flush(String path, Object fh) throws FuseException {
-        if (fh instanceof FileHandle)
+        if (fh instanceof FileHandle) {
             return 0;
+        }
 
         return Errno.EBADF;
     }
@@ -302,8 +306,9 @@ public class FakeFilesystem implements Filesystem3, XattrSupport, LifecycleSuppo
     // isDatasync indicates that only the user data should be flushed, not the meta data
 
     public int fsync(String path, Object fh, boolean isDatasync) throws FuseException {
-        if (fh instanceof FileHandle)
+        if (fh instanceof FileHandle) {
             return 0;
+        }
 
         return Errno.EBADF;
     }
@@ -340,13 +345,15 @@ public class FakeFilesystem implements Filesystem3, XattrSupport, LifecycleSuppo
     public int getxattr(String path, String name, ByteBuffer dst, int position) throws FuseException, BufferOverflowException {
         Node node = lookup(path);
 
-        if (node == null)
+        if (node == null) {
             return Errno.ENOENT;
+        }
 
         byte[] value = node.xattrs.get(name);
 
-        if (value == null)
+        if (value == null) {
             return Errno.ENOATTR;
+        }
 
         dst.put(value);
 
@@ -365,13 +372,15 @@ public class FakeFilesystem implements Filesystem3, XattrSupport, LifecycleSuppo
     public int getxattrsize(String path, String name, FuseSizeSetter sizeSetter) throws FuseException {
         Node node = lookup(path);
 
-        if (node == null)
+        if (node == null) {
             return Errno.ENOENT;
+        }
 
         byte[] value = node.xattrs.get(name);
 
-        if (value == null)
+        if (value == null) {
             return Errno.ENOATTR;
+        }
 
         sizeSetter.setSize(value.length);
 
@@ -389,11 +398,13 @@ public class FakeFilesystem implements Filesystem3, XattrSupport, LifecycleSuppo
     public int listxattr(String path, XattrLister lister) throws FuseException {
         Node node = lookup(path);
 
-        if (node == null)
+        if (node == null) {
             return Errno.ENOENT;
+        }
 
-        for (String xattrName : node.xattrs.keySet())
+        for (String xattrName : node.xattrs.keySet()) {
             lister.add(xattrName);
+        }
 
         return 0;
     }
