@@ -1,2 +1,4 @@
 .DS_Store
 maven/imls
+native/javafs
+native/libjavafs.so
