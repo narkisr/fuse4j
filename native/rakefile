@@ -1,0 +1,48 @@
+require 'rake/clean'
+
+PROG = "javafs" 
+LIBNAME = PROG
+LIBFILE = "lib#{LIBNAME}.a" 
+LIB_SO='libjavafs.so'
+
+SRC = FileList['**/*.c']
+OBJDIR = 'obj'
+OBJ = SRC.collect { |fn| File.join(OBJDIR, File.basename(fn).ext('o')) } # all the object files that we need to create
+CLEAN.include(OBJ, OBJDIR, LIB_SO,PROG)
+CLOBBER.include(PROG)
+
+# compilation flags
+LDFLAGS='-ljvm -lfuse -lpthread'
+FUSE_HOME = '/usr'
+JAVA_HOME = '/usr/lib/jvm/java-6-sun'
+INCLUDES = "-I#{JAVA_HOME}/include -I#{JAVA_HOME}/include/linux -I#{FUSE_HOME}/include/fuse"
+DEPFLAGS='-D_FILE_OFFSET_BITS=64'
+CFLAGS="-Wall -g -fPIC #{DEPFLAGS}"
+LDPATH = "-L#{FUSE_HOME}/lib -L#{JAVA_HOME}/jre/lib/i386/server"
+
+
+task :default => [:build]
+
+task :build => [PROG]
+
+
+file PROG => [LIBFILE] do
+	sh "gcc #{CFLAGS} #{LDFLAGS} #{LDPATH} -o #{PROG} #{OBJ}"
+end
+
+file LIBFILE => OBJ do
+	sh "gcc -shared #{LDFLAGS} #{LDPATH} -o #{LIB_SO} #{OBJ}"
+end
+
+directory OBJDIR
+
+rule '.o' => lambda{ |objfile| find_source(objfile) } do |t|
+	Task[OBJDIR].invoke
+	sh "gcc -c #{CFLAGS} #{INCLUDES} #{t.source} -o #{t.name} "
+end
+
+def find_source(objfile)
+	base = File.basename(objfile, '.o')
+	SRC.find { |s| File.basename(s, '.c') == base }
+end
+
