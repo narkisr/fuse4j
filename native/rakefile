@@ -1,28 +1,29 @@
+# see http://tinyurl.com/bvql7yp  
 require 'rake/clean'
 require 'rake-flags/detection'
 
-PROG = "javafs" 
-LIBNAME = PROG
+FS_EXEC = "javafs" 
+LIBNAME = FS_EXEC
 LIBFILE = "lib#{LIBNAME}.a" 
 LIB_SO='libjavafs.so'
 
 SRC = FileList['**/*.c']
 OBJDIR = 'obj'
-OBJ = SRC.collect { |fn| File.join(OBJDIR, File.basename(fn).ext('o')) } # all the object files that we need to create
-CLEAN.include(OBJ, OBJDIR, LIB_SO,PROG)
-CLOBBER.include(PROG)
+OBJS = SRC.collect { |fn| File.join(OBJDIR, File.basename(fn).ext('o')) } # all the object files that we need to create
+CLEAN.include(OBJS, OBJDIR, LIB_SO,FS_EXEC)
+CLOBBER.include(FS_EXEC)
 
 task :default => [:build]
 
-task :build => [PROG]
+task :build => [FS_EXEC]
 
 
-file PROG => [LIBFILE] do
-	sh "gcc #{CFLAGS} #{LDFLAGS} #{LDPATH} -o #{PROG} #{OBJ}"
+file FS_EXEC => [LIBFILE] do
+     sh "gcc -o #{FS_EXEC} #{OBJS} #{CFLAGS} #{LDFLAGS} #{LDPATH}"
 end
 
-file LIBFILE => OBJ do
-	sh "gcc -shared #{LDFLAGS} #{LDPATH} -o #{LIB_SO} #{OBJ}"
+file LIBFILE => OBJS do
+      sh "gcc -shared -o #{LIB_SO} #{OBJS} #{LDFLAGS} #{LDPATH}"
 end
 
 directory OBJDIR
