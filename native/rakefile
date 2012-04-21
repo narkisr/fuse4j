@@ -1,6 +1,7 @@
 # see http://tinyurl.com/bvql7yp  
 require 'rake/clean'
-require 'rake-flags/detection'
+require_relative 'rake-flags/detection'
+require_relative 'packaging/native'
 
 FS_EXEC = "javafs" 
 LIBNAME = FS_EXEC
@@ -19,22 +20,22 @@ task :build => [FS_EXEC]
 
 
 file FS_EXEC => [LIBFILE] do
-     sh "gcc -o #{FS_EXEC} #{OBJS} #{CFLAGS} #{LDFLAGS} #{LDPATH}"
+  sh "gcc -o #{FS_EXEC} #{OBJS} #{CFLAGS} #{LDFLAGS} #{LDPATH}"
 end
 
 file LIBFILE => OBJS do
-      sh "gcc -shared -o #{LIB_SO} #{OBJS} #{LDFLAGS} #{LDPATH}"
+  sh "gcc -shared -o #{LIB_SO} #{OBJS} #{LDFLAGS} #{LDPATH}"
 end
 
 directory OBJDIR
 
 rule '.o' => lambda{ |objfile| find_source(objfile) } do |t|
-	Task[OBJDIR].invoke
-	sh "gcc -c #{CFLAGS} #{INCLUDES} #{t.source} -o #{t.name} "
+  Task[OBJDIR].invoke
+  sh "gcc -c #{CFLAGS} #{INCLUDES} #{t.source} -o #{t.name} "
 end
 
 def find_source(objfile)
-	base = File.basename(objfile, '.o')
-	SRC.find { |s| File.basename(s, '.c') == base }
+  base = File.basename(objfile, '.o')
+  SRC.find { |s| File.basename(s, '.c') == base }
 end
 

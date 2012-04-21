@@ -2,3 +2,5 @@
 maven/imls
 native/javafs
 native/libjavafs.so
+native/native
+native/fuse4j-linux-native-2.4.0.jar

@@ -6,5 +6,5 @@ os_matchers = {
 
 uname = `uname -a`
 match,matcher =  os_matchers.find{|k,m| m.call(uname)}
-require "rake-flags/#{match.to_s}"
+require_relative "#{match.to_s}"
 
